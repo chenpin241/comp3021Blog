@@ -1,105 +1,174 @@
 package gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.util.ArrayList;
+import java.util.Date;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
+import base.Post;
+import base.User;
+import blog.Blog;
 
-public class BlogGUI implements ActionListener {
-	private JFrame mainFrame;
-	private JTextArea postTextArea;
-	private JTextField postContent;
-	private JButton refresh;
-	private JButton post;
-	private JPanel panel;
-	private JLabel label;
-	private JPanel southPanel;
-
+public class BlogGUI implements ActionListener{
+	//TODO: Ask TA: how to set the background color properly?
 	
-	public BlogGUI() {}
+	//The reason why these are private variables is because it will be called later
+	//on by other methods to handle events
+	private JPanel upperPanel;
+	private JPanel lowerPanel;
+	private JPanel upperPanelButtonArray;
+	private JTextArea postTextArea ;
+	private JTextArea postContent ;
+	private JButton refresh ;
+	private JButton post ;
+	private JLabel helpInfo ;
+	private Blog myBlog;
+	private final String BLOG_SAVE_PATH="c:\\blog.txt";
+
+	public BlogGUI() {
+		User me = new User(12345678, "Ben", "wsccp216@gmail.com");
+		myBlog = new Blog(me);
+	}
+	
+	class postListener implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String content = postTextArea.getText();
+			// check whether the post is empty
+			if(content == null){
+				postContent.setText("Something is wrong");
+			}else if( content.equals("")){
+				//do nothing
+			}
+			//check whether the length of the post has exceeded
+			if(content.length() > 140){
+				postContent.setText("Your content exceed 140 characters.");
+				postContent.setForeground(Color.RED);
+				return;
+			}
+			// add the post to the file
+			Date timeStamp = new Date();
+			Post newPost = new Post(timeStamp, content);
+			newPost.setContent(postTextArea.getText());
+			myBlog.post(newPost);
+			myBlog.save(BLOG_SAVE_PATH);
+			myBlog.list();
+
+
+			//  display the post in the display area and clear the area
+			postTextArea.setText("");
+			String post_content= newPost.getContent() +"\n" ;
+			postContent.setText(post_content);
+			helpInfo.setText("You can still input 140 characters");
+			
+		}
+		
+	}
+	
+	class refreshListener implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			myBlog.load(BLOG_SAVE_PATH);
+			ArrayList<Post> postList= myBlog.getAllPosts();
+			postContent.setText("");
+			for (Post p : postList) {
+				postContent.append(p.getContent() + "\n");
+			}
+		}
+		
+	}
+	
+	class helpInfoListener implements KeyListener{
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+			//not useful
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			//not useful
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			int contentLength = postTextArea.getText().length();
+			if(contentLength<=140){
+				helpInfo.setText(String.format("You can still input %d characters", 140-contentLength));
+			}else{
+				helpInfo.setText("Your post length has exceeded 140!");
+			}
+		}
+		
+	}
 	
 	public void setWindow() {
-		
-		// Set up the main frame
-		mainFrame = new JFrame("Micro Blog Demo");
-		Container pane = mainFrame.getContentPane();
-		mainFrame.setSize(500, 500);
-		mainFrame.setLocationRelativeTo(null);
-		mainFrame.setLayout(new GridLayout(2,0));
-		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		JFrame mainFrame = new JFrame("Micro Blog Demo");
+		mainFrame.setSize(500,700);
+	    mainFrame.setLayout(new GridLayout(2, 1));//2 rows and 1 column
+	    
+		JPanel upperPanel = new JPanel(new BorderLayout());
+		JPanel lowerPanel = new JPanel(new BorderLayout());
 
-		// Create the first panel to hold label, text area, and 2 buttons
-		panel = new JPanel();
-		panel.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createEmptyBorder(10,10,0,10),
-				BorderFactory.createEtchedBorder()));
-		panel.setLayout(new BorderLayout(10, 10));
+		postContent = new JTextArea("Here is my post!");//default text
+		postContent.setLineWrap(true);
+		postContent.setWrapStyleWord(true);
+		postContent.setBackground(Color.LIGHT_GRAY);
+		lowerPanel.add(postContent);
 		
-		// Create the label
-		label = new JLabel("You can still input 140 Characters");
-		label.setFont(new Font("Segoe WP",Font.BOLD,15));
-		
-		// Create the text area to post your text. Editable.
-		postTextArea = new JTextArea(200,500);
-		postTextArea.setBackground(Color.yellow);
-		postTextArea.setText("What's on your mind?");
-		postTextArea.setFont(new Font("Segoe WP",Font.PLAIN,14));
-		
-		// Create the second panel, will be nested inside the first panel
-		southPanel = new JPanel();
-		southPanel.setLayout(new GridLayout(0,2));
-		
-		// Create the refresh button
-		refresh = new JButton("Refresh");
-		refresh.addActionListener(this);
-		refresh.setBackground(Color.magenta);
-		
-		// Create the post button
-		post = new JButton("Post");
-		post.addActionListener(this);
-		post.setBackground(Color.cyan);
-		
-		// Add the refresh and post buttons into the second panel
-		southPanel.add(refresh, BorderLayout.WEST);
-		southPanel.add(post, BorderLayout.EAST);
-		
-		// Add items into the panel
-		panel.add(label, BorderLayout.NORTH);
-		panel.add(postTextArea, BorderLayout.CENTER);
-		panel.add(southPanel, BorderLayout.SOUTH);
+		postTextArea = new JTextArea("What's on your mind?");
+		postTextArea.setLineWrap(true);
+		postTextArea.setWrapStyleWord(true);
+		postTextArea.setBackground(Color.YELLOW);
+		refresh = new JButton("refresh");
+		post = new JButton("post");
+		helpInfo = new JLabel("You can still input 140 characters");
+		upperPanelButtonArray = new JPanel(new GridLayout(1,2));
+		upperPanelButtonArray.add(refresh);
+		upperPanelButtonArray.add(post);
+		upperPanel.add(upperPanelButtonArray,BorderLayout.SOUTH);
+		upperPanel.add(helpInfo,BorderLayout.NORTH);
+		upperPanel.add(postTextArea,BorderLayout.CENTER);
 
-		// Create a text field to post the content
-		postContent = new JTextField();
-		postContent.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createEmptyBorder(10,10,10,10),
-				BorderFactory.createEtchedBorder()));
-		postContent.setEditable(false);
-		postContent.setHorizontalAlignment(JTextField.CENTER);
-		postContent.setFont(new Font("Segoe WP",Font.BOLD,22));
+		mainFrame.add(upperPanel);
+		mainFrame.add(lowerPanel);
 		
-		// Add the created items into the content pane of the frame
-		pane.add(panel);
-		pane.add(postContent);
+		post.addActionListener(new postListener());
+		postTextArea.addKeyListener(new helpInfoListener());
+		refresh.addActionListener(new refreshListener());
+
 		
-		// Make them visible
+		//always set visible at the end
 		mainFrame.setVisible(true);
+		//if the following line is omitted, the program won't be terminated correctly
+		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
+
+	}
+	public static void main(String[] args) {
+		BlogGUI blogGUi = new BlogGUI();
+		blogGUi.setWindow();
 	}
 	
-	public static void main(String[] args) {
-		BlogGUI blogGUI = new BlogGUI();
-		blogGUI.setWindow();
-	}
-
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == post) {
-			postContent.setText(postTextArea.getText());
-			
-		} else if (e.getSource() == refresh) {
-			postContent.setText("You click REFRESH!");
+		if (e.getSource() == post){
+			postContent.setText("You clicked post");
+		}else if(e.getSource() == refresh){
+			postContent.setText("You clicked refresh");
 		}
 	}
 }

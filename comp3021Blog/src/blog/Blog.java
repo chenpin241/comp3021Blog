@@ -63,8 +63,7 @@ public class Blog implements Serializable{
 			allPosts.remove(index-1);
 		
 	}
-
-
+	
 	//@Override
 	//public String toString() {
 		

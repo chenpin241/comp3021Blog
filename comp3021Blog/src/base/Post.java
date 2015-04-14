@@ -16,7 +16,7 @@ public class Post implements Comparable<Post>,Serializable {
 		this.date = date;
 		this.content = content;
 	}
-
+	
 
 	public Date getDate() {
 		return date;
