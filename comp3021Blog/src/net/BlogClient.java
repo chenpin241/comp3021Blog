@@ -7,37 +7,42 @@ import java.util.*;
 import base.Post;
 
 public class BlogClient {
-	
-	public static final String IP="127.0.0.1";
+
+	public static final String IP ="127.0.0.1";
 	public static final int PORT = 3021;
 	
-	public static void main(String[] args) {
-        String sentence;
-        Socket clientSocket = null;
-        PrintWriter outToServer =null;
-        BufferedReader inFromUser = null;
-
-        try {
-        	clientSocket= new Socket(IP,PORT);
-        	outToServer = new PrintWriter(clientSocket.getOutputStream(),true);
-            System.out.println("Connected...");
-    		inFromUser = new BufferedReader(new InputStreamReader(System.in));
-    		System.out.println("Input the post: ");
-    		while((sentence = inFromUser.readLine())!= null){
-    			Date date = new Date();
-				Post post = new Post(date, sentence);
-				outToServer.println(post.toString());
-    		}
-            inFromUser.close();
-            outToServer.flush();
-            outToServer.close();
-            clientSocket.close();
-            
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        
-        
+	public static void main(String[] args){
+		
+		
+		
+		try {	          
+			Socket socket = new Socket(IP, PORT);
+			socket.setSoTimeout(0);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+			while(true){
+				
+				System.out.print("Input something:");
+				String cin = new Scanner(System.in).nextLine();
+				writer.println(cin);
+				if (cin.equals("quit"))
+					break;
+				else{
+					String line;
+					while(true){
+						if(socket.getInputStream().available() > 0 && (line = reader.readLine()) != null){
+							System.out.println(line);
+							break;
+						}
+					}
+				}
+				//writer.close();
+			}
+			reader.close();
+			socket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
-
 }
